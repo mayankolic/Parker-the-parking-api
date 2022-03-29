@@ -3,8 +3,8 @@ const schema = new mongoose.Schema(
     {
         ownerName: "String",
         vehicleType: "String",
-        vehicleNumber: "String",
-        entryTime: "String"
+        vehicleNumber: "String"
+        
     },
     { timestamps: true }
 );

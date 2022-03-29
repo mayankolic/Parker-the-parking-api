@@ -13,11 +13,8 @@ const CONNECTION_URL = "mongodb://parker-010:parker-010@cluster0-shard-00-00.qrr
 mongoose.connect(CONNECTION_URL, { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => app.listen(port, () => console.log(`Server Running on Port: http://localhost:${port}`)))
     .catch((error) => console.log(`${error} did not connect`));
-
-const url = "http://localhost:3000";
+let dispatch = [];
 function getDayDiff(entryDateAndTime, exitDateAndTime) {
-    // const entryMilliSeconds=entryDateAndTime.getUTCMilliseconds();
-    // const exitMilliSeconds=exitDateAndTime.getUTCMilliseconds();
     const entryMilliSeconds = entryDateAndTime.getTime();
     const exitMilliSeconds = exitDateAndTime.getTime();
     console.log(entryMilliSeconds);
@@ -41,17 +38,14 @@ function getCost(timeSpent, typeOfVehicle) {
     }
 }
 app.post("/", async (req, res) => {
-    //this will add entry to the parkedvehicles
-    const ownerName = req.params.ownerName;
-    const vehicleType = req.params.vehicleType;
-    const vehicleNumber = req.params.vehicleNumber;
-    const entryTime = req.params.entryTime;
+    const ownerName = "kjhgfd";
+    const vehicleType = "bike";
+    const vehicleNumber = "12345678915";
     try {
         const newParkedVehicle = await ParkedVehicles.create({
             ownerName,
             vehicleType,
-            vehicleNumber,
-            entryTime
+            vehicleNumber
         });
         res.json(newParkedVehicle);
     } catch (e) {
@@ -85,7 +79,7 @@ app.get('/parkedVehicles', async (req, res) => {
         throw new Error("Gaand fatt gayi behnchod");
     }
 })
-app.get('/dispatchedvehicles', async (req, res) => {
+app.get('/dispatchedVehicles', async (req, res) => {
     try {
         const dispatchedVaahan = await DispatchedVehicles.find();
         res.json({ status: "ok", data: dispatchedVaahan });
@@ -93,38 +87,42 @@ app.get('/dispatchedvehicles', async (req, res) => {
         throw new Error("Le bete ja Maa chuda!!")
     }
 });
+app.get('/:vehicleNumber', async (req, res) => {
 
-// axios({
-//     method: 'get',
-//     url:'/:vehicleNumber',
-// }) 
-// .then({})
-// });
-// axios.get('/vehicleNumber',(async (req, res) => {
-//     const number = req.params.vehicleNumber;
-//     var data = await ParkedVehicles.findOne({ vehicleNumber: number });
-//     console.log(data);
-//     const entryDateAndTime = data.createdAt;
-//     const exitDateAndTime = new Date();
-//     const chargedDays = getDayDiff(entryDateAndTime, exitDateAndTime);
-//     const charge = getCost(chargedDays, data.vehicleType);
-//     console.log(charge);
-// }).catch(error => {
-//     res.json({ statusCode: 404, message: error })
-// });
-// app.get('/:vehicleNumber', async (req, res) => {
-
-//     const number = req.params.vehicleNumber;
-//     try {
-//         var data = await ParkedVehicles.findOne({ vehicleNumber: number });
-//         console.log(data);
-//         const entryDateAndTime = data.createdAt;
-//         const exitDateAndTime = new Date();
-//         const chargedDays=getDayDiff(entryDateAndTime, exitDateAndTime);
-//         const charge=getCost(chargedDays,data.vehicleType);
-//         console.log(charge);
-
-//     } catch (e) {
-//         res.json({ status: "error", message: e });
-//     }
-// })
+    const number = req.params.vehicleNumber;
+    try {
+        var data = await ParkedVehicles.findOne({ vehicleNumber: number });
+        console.log(data);
+        
+        const entryDateAndTime = data.createdAt;
+        const exitDateAndTime = new Date();
+        const chargedDays = getDayDiff(entryDateAndTime, exitDateAndTime);
+        let charge = getCost(chargedDays, data.vehicleType);
+        // console.log(typeof charge);
+        let id = data._id;
+        await ParkedVehicles.deleteOne({ _id: id });
+        const ownerName = data.ownerName;
+        const vehicleType = data.vehicleType;
+        const vehicleNumber = await data.vehicleNumber;
+        const entryTime = (data.createdAt);
+        const exitTime = exitDateAndTime;
+        console.log(typeof entryTime);
+        console.log(typeof exitTime);
+        console.log(data);
+        // console.log(vehicleType);
+        // console.log("-----------------------------------------");
+        const newDispatchedVehicles = await DispatchedVehicles.create({
+            ownerName,
+            vehicleType,
+            vehicleNumber,
+            entryTime,
+            exitTime,
+            charge
+        });
+        console.log("------------------------------");
+        res.json({ newDispatchedVehicles });
+        // res.redirect('/home');
+    } catch (e) {
+        res.json({ status: "error", message: e });
+    }
+})
