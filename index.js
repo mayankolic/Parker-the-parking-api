@@ -13,7 +13,6 @@ const CONNECTION_URL = "mongodb://parker-010:parker-010@cluster0-shard-00-00.qrr
 mongoose.connect(CONNECTION_URL, { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => app.listen(port, () => console.log(`Server Running on Port: http://localhost:${port}`)))
     .catch((error) => console.log(`${error} did not connect`));
-let dispatch = [];
 function getDayDiff(entryDateAndTime, exitDateAndTime) {
     const entryMilliSeconds = entryDateAndTime.getTime();
     const exitMilliSeconds = exitDateAndTime.getTime();
@@ -76,7 +75,7 @@ app.get('/parkedVehicles', async (req, res) => {
         const parkedVaahan = await ParkedVehicles.find();
         res.json({ status: "ok", data: parkedVaahan });
     } catch (e) {
-        throw new Error("Gaand fatt gayi behnchod");
+        throw new Error("Error in Parked Vehicles Collection");
     }
 })
 app.get('/dispatchedVehicles', async (req, res) => {
@@ -84,7 +83,7 @@ app.get('/dispatchedVehicles', async (req, res) => {
         const dispatchedVaahan = await DispatchedVehicles.find();
         res.json({ status: "ok", data: dispatchedVaahan });
     } catch (e) {
-        throw new Error("Le bete ja Maa chuda!!")
+        throw new Error("Error in Dispatched Vehicles Collection")
     }
 });
 app.get('/:vehicleNumber', async (req, res) => {
@@ -98,7 +97,6 @@ app.get('/:vehicleNumber', async (req, res) => {
         const exitDateAndTime = new Date();
         const chargedDays = getDayDiff(entryDateAndTime, exitDateAndTime);
         let charge = getCost(chargedDays, data.vehicleType);
-        // console.log(typeof charge);
         let id = data._id;
         await ParkedVehicles.deleteOne({ _id: id });
         const ownerName = data.ownerName;
@@ -106,11 +104,6 @@ app.get('/:vehicleNumber', async (req, res) => {
         const vehicleNumber = await data.vehicleNumber;
         const entryTime = (data.createdAt);
         const exitTime = exitDateAndTime;
-        console.log(typeof entryTime);
-        console.log(typeof exitTime);
-        console.log(data);
-        // console.log(vehicleType);
-        // console.log("-----------------------------------------");
         const newDispatchedVehicles = await DispatchedVehicles.create({
             ownerName,
             vehicleType,
@@ -119,9 +112,7 @@ app.get('/:vehicleNumber', async (req, res) => {
             exitTime,
             charge
         });
-        console.log("------------------------------");
         res.json({ newDispatchedVehicles });
-        // res.redirect('/home');
     } catch (e) {
         res.json({ status: "error", message: e });
     }
