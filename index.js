@@ -64,6 +64,25 @@ app.get('/home', async(req, res) => {
   }
 });
 
+app.delete(('/:id'), async(req, res) => {
+  try {
+    const _id = req.params.id;
+    console.log(_id);
+    const delepar = await ParkedVehicles.findByIdAndDelete({
+      _id: _id
+    });
+    if (!delepar) {
+      res.status(404).send();
+    } else {
+      res.status(200).json({
+        status: "ok",
+        data: delepar
+      });
+    }
+  } catch (e) {
+    res.send(e);
+  }
+})
 
 app.get('/parkedVehicles', async(req, res) => {
   try {
@@ -73,6 +92,8 @@ app.get('/parkedVehicles', async(req, res) => {
     throw new Error("Error in Parked Vehicles Collection");
   }
 })
+
+
 app.get('/dispatchedVehicles', async(req, res) => {
   try {
     const dispatchedVaahan = await DispatchedVehicles.find();
