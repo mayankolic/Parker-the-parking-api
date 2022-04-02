@@ -6,7 +6,7 @@ const schema = new mongoose.Schema(
         vehicleNumber: "String",
         entryTime: "String",
         exitTime:"String",
-        cost:"number"
+        charge:"String"
     },
     { timestamps: true }
 );

@@ -4,7 +4,10 @@ const mongoose = require('mongoose');
 const app = express();
 const ParkedVehicles = require('./ParkedVehicles');
 const DispatchedVehicles = require('./DispatchedVehicles');
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 8080;
+app.use(express.json({
+  type: ['application/json', 'text/plain']
+}));
 const CONNECTION_URL = "mongodb://parker-010:parker-010@cluster0-shard-00-00.qrrnc.mongodb.net:27017,cluster0-shard-00-01.qrrnc.mongodb.net:27017,cluster0-shard-00-02.qrrnc.mongodb.net:27017/ParkingData?ssl=true&replicaSet=atlas-gl57w1-shard-0&authSource=admin&retryWrites=true&w=majority";
 mongoose.connect(CONNECTION_URL, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => app.listen(port, () => console.log(`Server Running on Port: http://localhost:${port}`)))
@@ -31,10 +34,12 @@ function getCost(timeSpent, typeOfVehicle) {
     return timeSpent * 5;
   }
 }
-app.post("/", async(req, res) => {
-  const ownerName = "kjhgfd";
-  const vehicleType = "bike";
-  const vehicleNumber = "12345678915";
+app.post("/", async (req, res) => {
+  console.log(req.body);
+  console.log("--------------------------------------------------");
+  const ownerName = req.body.ownerName;
+  const vehicleType = req.body.vehicleType;
+  const vehicleNumber = req.body.vehicleNumber;
   try {
     const newParkedVehicle = await ParkedVehicles.create({
       ownerName,
@@ -46,7 +51,7 @@ app.post("/", async(req, res) => {
     res.status(500).send(e);
   }
 });
-app.get('/', async(req, res) => {
+app.get('/', async (req, res) => {
   try {
     const vehicles = await ParkedVehicles.find();
     res.json(vehicles);
@@ -54,7 +59,7 @@ app.get('/', async(req, res) => {
     console.log(e);
   }
 });
-app.get('/home', async(req, res) => {
+app.get('/home', async (req, res) => {
   try {
     const parkedVaahan = await ParkedVehicles.find();
     const dispatchedVaahan = await DispatchedVehicles.find();
@@ -64,7 +69,7 @@ app.get('/home', async(req, res) => {
   }
 });
 
-app.delete(('/:id'), async(req, res) => {
+app.delete(('/:id'), async (req, res) => {
   try {
     const _id = req.params.id;
     console.log(_id);
@@ -84,7 +89,7 @@ app.delete(('/:id'), async(req, res) => {
   }
 })
 
-app.get('/parkedVehicles', async(req, res) => {
+app.get('/parkedVehicles', async (req, res) => {
   try {
     const parkedVaahan = await ParkedVehicles.find();
     res.json({ status: "ok", data: parkedVaahan });
@@ -94,7 +99,7 @@ app.get('/parkedVehicles', async(req, res) => {
 })
 
 
-app.get('/dispatchedVehicles', async(req, res) => {
+app.get('/dispatchedVehicles', async (req, res) => {
   try {
     const dispatchedVaahan = await DispatchedVehicles.find();
     res.json({ status: "ok", data: dispatchedVaahan });
@@ -102,7 +107,7 @@ app.get('/dispatchedVehicles', async(req, res) => {
     throw new Error("Error in Dispatched Vehicles Collection")
   }
 });
-app.get('/:vehicleNumber', async(req, res) => {
+app.get('/:vehicleNumber', async (req, res) => {
 
   const number = req.params.vehicleNumber;
   try {
@@ -112,7 +117,7 @@ app.get('/:vehicleNumber', async(req, res) => {
     const entryDateAndTime = data.createdAt;
     const exitDateAndTime = new Date();
     const chargedDays = getDayDiff(entryDateAndTime, exitDateAndTime);
-    let charge = getCost(chargedDays, data.vehicleType);
+    let charge = await getCost(chargedDays, data.vehicleType);
     let id = data._id;
     await ParkedVehicles.deleteOne({ _id: id });
     const ownerName = data.ownerName;
@@ -120,6 +125,7 @@ app.get('/:vehicleNumber', async(req, res) => {
     const vehicleNumber = await data.vehicleNumber;
     const entryTime = (data.createdAt);
     const exitTime = exitDateAndTime;
+    console.log(charge);
     const newDispatchedVehicles = await DispatchedVehicles.create({
       ownerName,
       vehicleType,
@@ -128,7 +134,8 @@ app.get('/:vehicleNumber', async(req, res) => {
       exitTime,
       charge
     });
-    res.json({ newDispatchedVehicles });
+    console.log(newDispatchedVehicles);
+    res.json({ status: "ok", body: newDispatchedVehicles });
   } catch (e) {
     res.json({ status: "error", message: e });
   }
